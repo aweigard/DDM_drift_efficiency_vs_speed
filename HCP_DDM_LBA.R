@@ -189,6 +189,53 @@ source("greatlakes.R")
 run.greatlakes.dmc("HCP_two_ddm","DDM","ddm_omit.R","asweigar",
                    "asweigar0",40,wall.hours=10)
 
+#### parameter estimates
+
+# loop to make summary parameters
+
+sZero.base.pars<-sZero
+
+for (s in 1:length(sZero)){
+  t<-sZero[[s]]$theta; d<-dim(t)
+  Ter<-t[,"t0",]+(t[,"st0",]/2)
+  gf.natural<-pnorm(t[,"gf",])
+  overall.v<-(t[,"v.lur",]+t[,"v.non",]+t[,"v.tar",])/3
+  D <- d + c(0, 3, 0)
+  t2<-array(sapply(1:D[3], function(x) cbind(t[,,x], Ter[,x],
+                                             gf.natural[,x],
+                                             overall.v[,x])), D)
+  dimnames(t2)[[2]]<-c(dimnames(t)[[2]],"Ter","gf.natural",
+                       "overall.v")
+  sZero.base.pars[[s]]$theta<-t2
+}
+
+sTwo.base.pars<-sTwo
+
+for (s in 1:length(sTwo)){
+  t<-sTwo[[s]]$theta; d<-dim(t)
+  Ter<-t[,"t0",]+(t[,"st0",]/2)
+  gf.natural<-pnorm(t[,"gf",])
+  overall.v<-(t[,"v.lur",]+t[,"v.non",]+t[,"v.tar",])/3
+  D <- d + c(0, 3, 0)
+  t2<-array(sapply(1:D[3], function(x) cbind(t[,,x], Ter[,x],
+                                             gf.natural[,x],
+                                             overall.v[,x])), D)
+  dimnames(t2)[[2]]<-c(dimnames(t)[[2]],"Ter","gf.natural",
+                       "overall.v")
+  sTwo.base.pars[[s]]$theta<-t2
+}
+
+# save out point estimates 
+
+sZero.base_medians<-lapply(sZero.base.pars,FUN=function(x) apply(x$theta,2,median))
+sZero.base_medians<-as.data.frame(t(as.data.frame(sZero.base_medians)))
+
+sTwo.base_medians<-lapply(sTwo.base.pars,FUN=function(x) apply(x$theta,2,median))
+sTwo.base_medians<-as.data.frame(t(as.data.frame(sTwo.base_medians)))
+
+write.csv(sZero.base_medians,file="HCP_zero_DDM_postmedians.csv")
+
+write.csv(sTwo.base_medians,file="HCP_two_DDM_postmedians.csv")
 
 ######################################
 # LBA ################################
@@ -242,5 +289,96 @@ source("greatlakes.R")
 run.greatlakes.dmc("HCP_two_lba","LBA","lba_BpvGF.R","asweigar",
                    "asweigar0",40,wall.hours=10)
 
+#### parameter estimates
+
+# loop to make summary parameters (EEA and SEA)
+
+sZero.base.pars<-sZero
+
+for (s in 1:length(sZero.base.pars)){
+  t<-sZero.base.pars[[s]]$theta; d<-dim(t)
+  gf.natural<-pnorm(t[,"gf",])
+  EEA<-( (t[,"mean_v.lur.true",]-t[,"mean_v.lur.false",]) + 
+          (t[,"mean_v.non.true",]-t[,"mean_v.non.false",]) +
+           (t[,"mean_v.tar.true",]-t[,"mean_v.tar.false",]) )/3
+  SEA<-( (t[,"mean_v.lur.true",]+t[,"mean_v.lur.false",]) + 
+           (t[,"mean_v.non.true",]+t[,"mean_v.non.false",]) +
+           (t[,"mean_v.tar.true",]+t[,"mean_v.tar.false",]) )/6
+  D <- d + c(0, 3, 0)
+  t2<-array(sapply(1:D[3], function(x) cbind(t[,,x], gf.natural[,x],
+                                             EEA[,x],
+                                             SEA[,x])), D)
+  dimnames(t2)[[2]]<-c(dimnames(t)[[2]],"gf.natural","EEA",
+                       "SEA")
+  sZero.base.pars[[s]]$theta<-t2
+}
+
+sTwo.base.pars<-sTwo
+
+for (s in 1:length(sTwo)){
+  t<-sTwo[[s]]$theta; d<-dim(t)
+  gf.natural<-pnorm(t[,"gf",])
+  EEA<-( (t[,"mean_v.lur.true",]-t[,"mean_v.lur.false",]) + 
+           (t[,"mean_v.non.true",]-t[,"mean_v.non.false",]) +
+           (t[,"mean_v.tar.true",]-t[,"mean_v.tar.false",]) )/3
+  SEA<-( (t[,"mean_v.lur.true",]+t[,"mean_v.lur.false",]) + 
+           (t[,"mean_v.non.true",]+t[,"mean_v.non.false",]) +
+           (t[,"mean_v.tar.true",]+t[,"mean_v.tar.false",]) )/6
+  D <- d + c(0, 3, 0)
+  t2<-array(sapply(1:D[3], function(x) cbind(t[,,x], gf.natural[,x],
+                                             EEA[,x],
+                                             SEA[,x])), D)
+  dimnames(t2)[[2]]<-c(dimnames(t)[[2]],"gf.natural","EEA",
+                       "SEA")
+  sTwo.base.pars[[s]]$theta<-t2
+}
+
+# save out point estimates 
+
+sZero.base_medians<-lapply(sZero.base.pars,FUN=function(x) apply(x$theta,2,median))
+sZero.base_medians<-as.data.frame(t(as.data.frame(sZero.base_medians)))
+
+sTwo.base_medians<-lapply(sTwo.base.pars,FUN=function(x) apply(x$theta,2,median))
+sTwo.base_medians<-as.data.frame(t(as.data.frame(sTwo.base_medians)))
+
+write.csv(sZero.base_medians,file="HCP_zero_LBA_postmedians.csv")
+
+write.csv(sTwo.base_medians,file="HCP_two_LBA_postmedians.csv")
+
+### LBA make posterior predictives ###
+
+load("hcp_nback_lba_CONVERGED.RData")
+sim.Zero <- h.post.predict.dmc(sZero,cores=3)
+save(sim.Zero, file="hcp_lba_zero_pp.RData")
+#
+
+load("hcp_nback_lba_CONVERGED.RData")
+sim.Two <- h.post.predict.dmc(sTwo,cores=3)
+save(sim.Two, file="hcp_lba_two_pp.RData")
+#
+
+### model fit plots ###
+
+### make plots
+
+# load pp data
+
+load("hcp_lba_zero_pp.RData")
+
+jpeg(filename = "HCP_0_lba.jpg",width = 9.2,height = 3,
+     units = "in",res=400)
+plot.pp.dmc(sim.Zero,layout = c(1,3),
+            model.legend = F,show.fits=FALSE,mar=c(4,5,3,1),pos=NA,
+            data.col = "red")
+dev.off()
+
+load("hcp_lba_two_pp.RData")
+
+jpeg(filename = "HCP_2_lba.jpg",width = 9.2,height = 3,
+     units = "in",res=400)
+plot.pp.dmc(sim.Two,layout = c(1,3),
+            model.legend = F,show.fits=FALSE,mar=c(4,5,3,1),pos=NA,
+            data.col = "red")
+dev.off()
 
 
