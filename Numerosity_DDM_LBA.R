@@ -140,6 +140,53 @@ source("greatlakes.R")
 run.greatlakes.dmc("num_ddm_broad","DDM","ddm_omit.R","asweigar",
                    "asweigar0",40,wall.hours=10)
 
+#### parameter estimates
+
+# loop to make summary parameters
+
+
+num.pars<-samples
+
+for (s in 1:length(num.pars)){
+  t<-num.pars[[s]]$theta; d<-dim(t)
+  Ter<-t[,"t0",]+(t[,"st0",]/2)
+  gf.natural<-pnorm(t[,"gf",])
+  overall.v<-(t[,"v.few.easy",]+t[,"v.many.easy",]+t[,"v.few.hard",]+t[,"v.many.hard",])/4
+  D <- d + c(0, 3, 0)
+  t2<-array(sapply(1:D[3], function(x) cbind(t[,,x], Ter[,x],
+                                             gf.natural[,x],
+                                             overall.v[,x])), D)
+  dimnames(t2)[[2]]<-c(dimnames(t)[[2]],"Ter","gf.natural",
+                       "overall.v")
+  num.pars[[s]]$theta<-t2
+}
+
+# save out point estimates 
+
+num.pars_medians<-lapply(num.pars,FUN=function(x) apply(x$theta,2,median))
+num.pars_medians<-as.data.frame(t(as.data.frame(num.pars_medians)))
+
+write.csv(num.pars_medians,file="num_DDM_postmedians.csv")
+
+### make posterior predictives ###
+
+load("num_ddm_broad.RData")
+
+sim.num <- h.post.predict.dmc(samples,cores=1)
+save(sim.num, file="num_ddm_broad_pp.RData")
+#
+
+# load pp data
+
+load("num_ddm_broad_pp.RData")
+
+jpeg(filename = "ddm_num.jpg",width = 5,height = 5,
+     units = "in",res=400)
+plot.pp.dmc(sim.num,layout = c(2,2),
+            model.legend = F,show.fits=FALSE,mar=c(4,5,3,1),pos=NA,
+            data.col = "red")
+dev.off()
+
 ######################################
 # LBA ################################
 ######################################
@@ -184,5 +231,61 @@ save(samples ,file="num_lba_broad.RData")
 source("greatlakes.R")
 run.greatlakes.dmc("num_lba_broad","LBA","lba_BpvGF.R","asweigar",
                    "asweigar0",40,wall.hours=10)
+
+#### parameter estimates
+
+# loop to make summary parameters (EEA and SEA)
+
+num.pars<-samples
+
+for (s in 1:length(num.pars)){
+  t<-num.pars[[s]]$theta; d<-dim(t)
+  gf.natural<-pnorm(t[,"gf",])
+  EEA<-( (t[,"mean_v.few.easy.true",]-t[,"mean_v.few.easy.false",]) + 
+           (t[,"mean_v.many.easy.true",]-t[,"mean_v.many.easy.false",]) +
+           (t[,"mean_v.few.hard.true",]-t[,"mean_v.few.hard.false",]) + 
+           (t[,"mean_v.many.hard.true",]-t[,"mean_v.many.hard.false",])  )/4
+  SEA<-( (t[,"mean_v.few.easy.true",]+t[,"mean_v.few.easy.false",]) + 
+           (t[,"mean_v.many.easy.true",]+t[,"mean_v.many.easy.false",]) +
+           (t[,"mean_v.few.hard.true",]+t[,"mean_v.few.hard.false",]) + 
+           (t[,"mean_v.many.hard.true",]+t[,"mean_v.many.hard.false",])  )/8
+  D <- d + c(0, 3, 0)
+  t2<-array(sapply(1:D[3], function(x) cbind(t[,,x], gf.natural[,x],
+                                             EEA[,x],
+                                             SEA[,x])), D)
+  dimnames(t2)[[2]]<-c(dimnames(t)[[2]],"gf.natural","EEA",
+                       "SEA")
+  num.pars[[s]]$theta<-t2
+}
+
+# save out point estimates 
+
+num.pars_medians<-lapply(num.pars,FUN=function(x) apply(x$theta,2,median))
+num.pars_medians<-as.data.frame(t(as.data.frame(num.pars_medians)))
+
+write.csv(num.pars_medians,file="num_LBA_postmedians.csv")
+
+### make posterior predictives ###
+
+load("num_lba_broad.RData")
+
+sim.num <- h.post.predict.dmc(samples,cores=1)
+save(sim.num, file="num_lba_broad_pp.RData")
+#
+
+
+### make plots
+
+# load pp data
+
+load("num_lba_broad_pp.RData")
+
+jpeg(filename = "ddm_lba.jpg",width = 5,height = 5,
+     units = "in",res=400)
+plot.pp.dmc(sim.num,layout = c(2,2),
+            model.legend = F,show.fits=FALSE,mar=c(4,5,3,1),pos=NA,
+            data.col = "red")
+dev.off()
+
 
 
